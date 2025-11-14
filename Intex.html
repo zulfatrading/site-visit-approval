@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site Visit Approval Form</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f5f5f5;
+            padding: 10px;
+            font-size: 11px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            text-align: left;
+            border-bottom: 3px solid #1e5a96;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo-placeholder {
+            width: 180px;
+            height: 100px;
+            border: 2px dashed #1e5a96;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            padding: 10px;
+            text-align: center;
+        }
+        
+        .logo-placeholder-title {
+            font-size: 11px;
+            font-weight: bold;
+            color: #1e5a96;
+            margin-bottom: 5px;
+        }
+        
+        .logo-placeholder-text {
+            font-size: 8px;
+            color: #666;
+            line-height: 1.3;
+        }
+        
+        .company-logo {
+            height: 100px;
+            width: auto;
+            display: none;
+        }
+        
+        .company-logo[src]:not([src=""]) {
+            display: block;
+        }
+        
+        .company-logo[src]:not([src=""]) ~ .logo-placeholder {
+            display: none;
+        }
+        
+        .form-title-section {
+            text-align: right;
+        }
+        
+        .form-title {
+            color: #1e5a96;
+            font-size: 14px;
+            font-weight: bold;
+            margin: 0;
+        }
+        
+        .mode-indicator {
+            background: #f39c12;
+            color: white;
+            padding: 8px 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 12px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .mode-indicator.active {
+            display: block;
+        }
+        
+        .mode-indicator.employee { background: #3498db; }
+        .mode-indicator.line-manager { background: #f39c12; }
+        .mode-indicator.hr-manager { background: #9b59b6; }
+        .mode-indicator.completed { background: #27ae60; }
+        
+        .form-section {
+            margin-bottom: 12px;
+        }
+        
+        .section-title {
+            background: #1e5a96;
+            color: white;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        
+        .form-row.two-col {
+            grid-template-columns: 1fr 1fr;
+        }
+        
+        .form-row.full {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            font-weight: bold;
+            font-size: 10px;
+            color: #2c3e50;
+            margin-bottom: 2px;
+        }
+        
+        .form-group label .required {
+            color: #e74c3c;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 4px 6px;
+            border: 1px solid #bdc3c7;
+            border-radius: 3px;
+            font-size: 10px;
+            font-family: Arial, sans-serif;
+        }
+        
+        .form-group input:disabled,
+        .form-group select:disabled,
+        .form-group textarea:disabled {
+            background: #ecf0f1;
+            cursor: not-allowed;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 35px;
+        }
+        
+        .employee-section {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 3px;
+            background: #f9f9f9;
+        }
+        
+        .employee-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .employee-title {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 11px;
+        }
+        
+        .remove-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 3px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10px;
+        }
+        
+        .remove-btn:hover {
+            background: #c0392b;
+        }
+        
+        .add-employee-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 6px 15px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10px;
+            margin-top: 5px;
+        }
+        
+        .add-employee-btn:hover {
+            background: #229954;
+        }
+        
+        .approval-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .approval-box {
+            border: 2px solid #1e5a96;
+            padding: 10px;
+            border-radius: 3px;
+            position: relative;
+        }
+        
+        .approval-box.editable {
+            border-color: #f39c12;
+            background: #fffbf0;
+        }
+        
+        .approval-box.approved {
+            border-color: #27ae60;
+            background: #f0fdf4;
+        }
+        
+        .approval-box.rejected {
+            border-color: #e74c3c;
+            background: #fef2f2;
+        }
+        
+        .approval-box h3 {
+            color: #1e5a96;
+            font-size: 11px;
+            margin-bottom: 8px;
+            text-align: center;
+            border-bottom: 1px solid #bdc3c7;
+            padding-bottom: 5px;
+        }
+        
+        .approval-status-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 9px;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .approval-status-badge.pending { background: #95a5a6; }
+        .approval-status-badge.approved { background: #27ae60; }
+        .approval-status-badge.rejected { background: #e74c3c; }
+        
+        .signature-line {
+            border-bottom: 1px solid #000;
+            margin: 15px 0 5px 0;
+            min-height: 25px;
+        }
+        
+        .approval-label {
+            font-size: 9px;
+            color: #7f8c8d;
+        }
+        
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            background: #2980b9;
+        }
+        
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .btn-success:hover:not(:disabled) {
+            background: #229954;
+        }
+        
+        .btn-warning {
+            background: #f39c12;
+            color: white;
+        }
+        
+        .btn-warning:hover:not(:disabled) {
+            background: #e67e22;
+        }
+        
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .btn-danger:hover:not(:disabled) {
+            background: #c0392b;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 8px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .footer {
+            margin-top: 20px;
+            padding: 0;
+            width: 100%;
+            margin-left: -20px;
+            margin-right: -20px;
+            margin-bottom: -20px;
+        }
+        
+        .footer-img {
+            width: calc(100% + 40px);
+            height: auto;
+            display: block;
+        }
+        
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 10px;
+            margin-bottom: 15px;
+            font-size: 10px;
+        }
+        
+        @media print {
+            body {
+                padding: 0;
+                background: white;
+            }
+            
+            .container {
+                box-shadow: none;
+                padding: 15px;
+                max-width: 100%;
+            }
+            
+            .action-buttons,
+            .add-employee-btn,
+            .remove-btn,
+            .mode-indicator,
+            .info-box {
+                display: none !important;
+            }
+            
+            .footer {
+                display: block !important;
+            }
+            
+            @page {
+                size: A4;
+                margin: 10mm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo-section">
+                <img src="" alt="Zulfa Trading LLC" class="company-logo" id="companyLogo">
+                
+                <div class="logo-placeholder">
+                    <div class="logo-placeholder-title">INSERT LOGO HERE</div>
+                    <div class="logo-placeholder-text">
+                        To add your logo:<br>
+                        1. Open this HTML file in a text editor<br>
+                        2. Find: id="companyLogo"<br>
+                        3. Add your logo URL in src=""<br>
+                        Example: src="logo.png"
+                    </div>
+                </div>
+            </div>
+            <div class="form-title-section">
+                <h2 class="form-title">Site Visit / Out of Office Work<br>Approval Form</h2>
+            </div>
+        </div>
+        
+        <!-- Mode Indicator -->
+        <div class="mode-indicator employee active" id="modeIndicator">
+            📝 EMPLOYEE MODE - Fill and submit the form
+        </div>
+        
+        <!-- Load Request Section (for managers) -->
+        <div class="info-box" id="loadRequestSection" style="display: none; background: #fff3cd; border-left-color: #f39c12;">
+            <strong>⚡ Load Pending Request:</strong>
+            <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
+                <input type="text" id="loadRequestNumber" placeholder="Enter Request Number (e.g., REQ-1234567890)" style="flex: 1; padding: 8px; border: 2px solid #f39c12; border-radius: 4px; font-size: 12px;">
+                <button type="button" class="btn btn-warning" id="loadRequestBtn" style="padding: 8px 20px;">Load Request</button>
+            </div>
+        </div>
+        
+        <!-- Mode Switch Buttons -->
+        <div class="action-buttons" id="modeSwitchButtons" style="margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+            <p style="font-size: 11px; margin-bottom: 8px; text-align: center;"><strong>Switch Mode:</strong></p>
+            <button type="button" class="btn btn-primary" id="switchToEmployeeBtn" onclick="switchMode('employee')" style="padding: 6px 15px; font-size: 10px;">👤 Employee Mode</button>
+            <button type="button" class="btn btn-warning" id="switchToLineManagerBtn" onclick="switchMode('line-manager')" style="padding: 6px 15px; font-size: 10px;">👔 Direct Manager/Supervisor Mode</button>
+            <button type="button" class="btn" id="switchToHRBtn" onclick="switchMode('hr-manager')" style="padding: 6px 15px; font-size: 10px; background: #9b59b6; color: white;">👥 HR Manager Mode</button>
+        </div>
+        
+        <!-- Info Box -->
+        <div class="info-box" id="infoBox">
+            <strong>Instructions:</strong> Fill all required fields and click "Submit to Line Manager"
+        </div>
+        
+        <form id="approvalForm">
+            <!-- Request & Visit Details -->
+            <div class="form-section">
+                <div class="section-title">REQUEST & VISIT DETAILS</div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Request Date <span class="required">*</span></label>
+                        <input type="date" id="requestDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Request Number</label>
+                        <input type="text" id="requestNumber" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Visit Date <span class="required">*</span></label>
+                        <input type="date" id="visitDate" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Return Date <span class="required">*</span></label>
+                        <input type="date" id="returnDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Departure Time <span class="required">*</span></label>
+                        <input type="time" id="departureTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Return Time <span class="required">*</span></label>
+                        <input type="time" id="returnTime" required>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Purpose & Location -->
+            <div class="form-section">
+                <div class="section-title">PURPOSE & LOCATION</div>
+                
+                <div class="form-row full">
+                    <div class="form-group">
+                        <label>Type of Work <span class="required">*</span></label>
+                        <select id="workType" required>
+                            <option value="">-- Select --</option>
+                            <option value="site_inspection">Site Inspection</option>
+                            <option value="client_meeting">Client Meeting</option>
+                            <option value="project_supervision">Project Supervision</option>
+                            <option value="mep_maintenance">MEP Maintenance</option>
+                            <option value="design_consultation">Design Consultation</option>
+                            <option value="fitout_inspection">Fit-out Construction</option>
+                            <option value="property_management">Property Management</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row full">
+                    <div class="form-group">
+                        <label>Project Name & Location <span class="required">*</span></label>
+                        <textarea id="projectNameLocation" placeholder="Enter project name and complete address (building name, area, landmarks)" required></textarea>
+                    </div>
+                </div>
+                
+                <div class="form-row full">
+                    <div class="form-group">
+                        <label>Purpose <span class="required">*</span></label>
+                        <textarea id="purpose" placeholder="Brief description of visit purpose" required></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Employee Details -->
+            <div class="form-section">
+                <div class="section-title">EMPLOYEE DETAILS</div>
+                
+                <div id="employees-container">
+                    <div class="employee-section" data-employee="1">
+                        <div class="employee-header">
+                            <span class="employee-title">Employee 1 (Primary)</span>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Name <span class="required">*</span></label>
+                                <input type="text" class="employee-name" placeholder="Full name" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Department <span class="required">*</span></label>
+                                <select class="employee-department" required>
+                                    <option value="">-- Select --</option>
+                                    <option value="interior_design">Interior Design</option>
+                                    <option value="fitout">Fit-out Construction</option>
+                                    <option value="mep">MEP Maintenance</option>
+                                    <option value="property">Property Management</option>
+                                    <option value="administration">Administration</option>
+                                    <option value="hr">Human Resources</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Email <span class="required">*</span></label>
+                                <input type="email" class="employee-email" placeholder="email@company.com" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="button" class="add-employee-btn" id="addEmployeeBtn">+ Add Another Employee</button>
+            </div>
+            
+            <!-- Vehicle Details -->
+            <div class="form-section">
+                <div class="section-title">VEHICLE DETAILS</div>
+                
+                <div class="form-row two-col">
+                    <div class="form-group">
+                        <label>Vehicle Type <span class="required">*</span></label>
+                        <select id="vehicleType" required>
+                            <option value="">-- Select --</option>
+                            <option value="company">Company Vehicle</option>
+                            <option value="personal">Personal Vehicle</option>
+                            <option value="rental">Rental Vehicle</option>
+                            <option value="public">Public Transportation</option>
+                            <option value="client">Client Provided</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Vehicle Number</label>
+                        <input type="text" id="vehicleNumber" placeholder="Vehicle plate number">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Approvals -->
+            <div class="approval-section">
+                <!-- Direct Manager/Supervisor -->
+                <div class="approval-box" id="lineManagerBox">
+                    <span class="approval-status-badge pending" id="lineManagerBadge">PENDING</span>
+                    <h3>DIRECT MANAGER/SUPERVISOR APPROVAL</h3>
+                    <div class="form-group" style="margin-bottom: 6px;">
+                        <label>Name <span class="required">*</span></label>
+                        <input type="text" id="lineManagerName" placeholder="Enter manager's name" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 6px;">
+                        <label>Email <span class="required">*</span></label>
+                        <input type="email" id="lineManagerEmail" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 6px;">
+                        <label>Status</label>
+                        <select id="lineManagerStatus" disabled>
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                    </div>
+                    <div class="signature-line" id="lineManagerSignature"></div>
+                    <p class="approval-label">Signature & Date: <span id="lineManagerDate"></span></p>
+                    <div class="form-group" style="margin-top: 6px;">
+                        <label>Comments</label>
+                        <textarea id="lineManagerComments" placeholder="Approval comments" disabled style="min-height: 30px;"></textarea>
+                    </div>
+                </div>
+                
+                <!-- HR Manager -->
+                <div class="approval-box" id="hrManagerBox">
+                    <span class="approval-status-badge pending" id="hrManagerBadge">PENDING</span>
+                    <h3>HR MANAGER APPROVAL</h3>
+                    <div class="form-group" style="margin-bottom: 6px;">
+                        <label>Name</label>
+                        <input type="text" id="hrManagerName" disabled>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 6px;">
+                        <label>Email <span class="required">*</span></label>
+                        <input type="email" id="hrManagerEmail" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 6px;">
+                        <label>Status</label>
+                        <select id="hrManagerStatus" disabled>
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                    </div>
+                    <div class="signature-line" id="hrManagerSignature"></div>
+                    <p class="approval-label">Signature & Date: <span id="hrManagerDate"></span></p>
+                    <div class="form-group" style="margin-top: 6px;">
+                        <label>Comments</label>
+                        <textarea id="hrManagerComments" placeholder="Approval comments" disabled style="min-height: 30px;"></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Declaration -->
+            <div class="checkbox-group">
+                <input type="checkbox" id="declaration" required>
+                <label for="declaration" style="font-size: 9px;"><strong>I confirm the information is accurate and will maintain professional conduct <span class="required">*</span></strong></label>
+            </div>
+            
+            <!-- Buttons -->
+            <div class="action-buttons">
+                <!-- Employee Mode -->
+                <button type="button" class="btn btn-primary" id="submitToLineManagerBtn">Submit to Direct Manager/Supervisor</button>
+                
+                <!-- Direct Manager/Supervisor Mode -->
+                <button type="button" class="btn btn-success hidden" id="lineManagerApproveBtn">✓ Approve</button>
+                <button type="button" class="btn btn-danger hidden" id="lineManagerRejectBtn">✗ Reject</button>
+                
+                <!-- HR Manager Mode -->
+                <button type="button" class="btn btn-success hidden" id="hrManagerApproveBtn">✓ Approve</button>
+                <button type="button" class="btn btn-danger hidden" id="hrManagerRejectBtn">✗ Reject</button>
+                
+                <!-- Universal Buttons -->
+                <button type="button" class="btn btn-warning" id="printBtn">🖨️ Print</button>
+                <button type="button" class="btn btn-primary" id="pdfBtn">📄 Save PDF</button>
+            </div>
+        </form>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <svg class="footer-img" viewBox="0 0 1400 100" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+                <defs>
+                    <linearGradient id="footerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color:#2e7bc4;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#1e5a96;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+                <path d="M 0,30 Q 350,10 700,30 T 1400,30 L 1400,100 L 0,100 Z" fill="url(#footerGrad)"/>
+                <text x="25" y="70" font-family="Arial" font-size="11" fill="white">
+                    <tspan>📋 CR: 1132934</tspan>
+                    <tspan x="150" dy="0">📍 P.O. Box 87, P.C. 322, Falaj Al Qabail, Suhar, Sultanate of Oman</tspan>
+                    <tspan x="700" dy="0">✉ info@zulfa.om</tspan>
+                    <tspan x="860" dy="0">🌐 www.zulfa.om</tspan>
+                    <tspan x="1030" dy="0">📞 +968 93800259</tspan>
+                    <tspan x="1210" dy="0">📞 +968 26704966</tspan>
+                </text>
+                <circle cx="1260" cy="35" r="10" fill="white"/>
+                <text x="1257" y="40" font-family="Arial" font-size="10" fill="#1e5a96">T</text>
+                <circle cx="1290" cy="35" r="10" fill="white"/>
+                <text x="1286" y="40" font-family="Arial" font-size="10" fill="#1e5a96">I</text>
+                <circle cx="1320" cy="35" r="10" fill="white"/>
+                <text x="1315" y="40" font-family="Arial" font-size="10" fill="#1e5a96">in</text>
+                <rect x="1340" y="20" width="40" height="40" fill="white" rx="2"/>
+                <text x="1345" y="45" font-family="Arial" font-size="8" fill="#1e5a96">QR</text>
+            </svg>
+        </div>
+    </div>
+    
+    <script>
+        let employeeCount = 1;
+        let currentMode = 'employee';
+        
+        // Generate request number
+        document.getElementById('requestNumber').value = 'REQ-' + Date.now();
+        document.getElementById('requestDate').value = new Date().toISOString().split('T')[0];
+        
+        // Mode switching function
+        function switchMode(mode) {
+            currentMode = mode;
+            updateUIForMode(mode);
+        }
+        
+        function updateUIForMode(mode) {
+            const modeIndicator = document.getElementById('modeIndicator');
+            const infoBox = document.getElementById('infoBox');
+            const loadRequestSection = document.getElementById('loadRequestSection');
+            
+            // Reset all buttons
+            document.getElementById('submitToLineManagerBtn').classList.add('hidden');
+            document.getElementById('lineManagerApproveBtn').classList.add('hidden');
+            document.getElementById('lineManagerRejectBtn').classList.add('hidden');
+            document.getElementById('hrManagerApproveBtn').classList.add('hidden');
+            document.getElementById('hrManagerRejectBtn').classList.add('hidden');
+            document.getElementById('addEmployeeBtn').classList.remove('hidden');
+            
+            if (mode === 'employee') {
+                modeIndicator.className = 'mode-indicator employee active';
+                modeIndicator.textContent = '📝 EMPLOYEE MODE - Fill and submit the form';
+                infoBox.innerHTML = '<strong>Instructions:</strong> Fill all required fields and click "Submit to Direct Manager/Supervisor"';
+                infoBox.style.display = 'block';
+                loadRequestSection.style.display = 'none';
+                
+                // Enable employee fields
+                document.querySelectorAll('#approvalForm input:not([id*="Manager"]), #approvalForm select:not([id*="Manager"]), #approvalForm textarea:not([id*="Manager"])').forEach(field => {
+                    if (field.id !== 'requestNumber') {
+                        field.disabled = false;
+                    }
+                });
+                
+                // Disable approval fields
+                document.getElementById('lineManagerName').disabled = true;
+                document.getElementById('lineManagerStatus').disabled = true;
+                document.getElementById('lineManagerComments').disabled = true;
+                document.getElementById('hrManagerName').disabled = true;
+                document.getElementById('hrManagerStatus').disabled = true;
+                document.getElementById('hrManagerComments').disabled = true;
+                
+                document.getElementById('submitToLineManagerBtn').classList.remove('hidden');
+                
+            } else if (mode === 'line-manager') {
+                modeIndicator.className = 'mode-indicator line-manager active';
+                modeIndicator.textContent = '👔 DIRECT MANAGER/SUPERVISOR MODE - Review and approve/reject';
+                infoBox.style.display = 'none';
+                loadRequestSection.style.display = 'block';
+                
+                // Disable employee fields
+                disableEmployeeFields();
+                
+                // Enable line manager fields
+                document.getElementById('lineManagerName').disabled = false;
+                document.getElementById('lineManagerStatus').disabled = false;
+                document.getElementById('lineManagerComments').disabled = false;
+                document.getElementById('lineManagerBox').classList.add('editable');
+                
+                document.getElementById('lineManagerApproveBtn').classList.remove('hidden');
+                document.getElementById('lineManagerRejectBtn').classList.remove('hidden');
+                document.getElementById('addEmployeeBtn').classList.add('hidden');
+                
+            } else if (mode === 'hr-manager') {
+                modeIndicator.className = 'mode-indicator hr-manager active';
+                modeIndicator.textContent = '👥 HR MANAGER MODE - Final approval';
+                infoBox.style.display = 'none';
+                loadRequestSection.style.display = 'block';
+                
+                // Disable all previous fields
+                disableEmployeeFields();
+                document.getElementById('lineManagerName').disabled = true;
+                document.getElementById('lineManagerStatus').disabled = true;
+                document.getElementById('lineManagerComments').disabled = true;
+                
+                // Enable HR fields
+                document.getElementById('hrManagerName').disabled = false;
+                document.getElementById('hrManagerStatus').disabled = false;
+                document.getElementById('hrManagerComments').disabled = false;
+                document.getElementById('hrManagerBox').classList.add('editable');
+                
+                document.getElementById('hrManagerApproveBtn').classList.remove('hidden');
+                document.getElementById('hrManagerRejectBtn').classList.remove('hidden');
+                document.getElementById('addEmployeeBtn').classList.add('hidden');
+            }
+        }
+        
+        // Load Request Button
+        document.getElementById('loadRequestBtn').addEventListener('click', function() {
+            const requestNum = document.getElementById('loadRequestNumber').value.trim();
+            if (!requestNum) {
+                alert('⚠️ Please enter a request number');
+                return;
+            }
+            
+            const savedData = localStorage.getItem('form_' + requestNum);
+            if (!savedData) {
+                alert('❌ Request not found: ' + requestNum + '\n\nPlease check the request number and try again.');
+                return;
+            }
+            
+            loadFormData(JSON.parse(savedData));
+            alert('✅ Request loaded successfully!\n\nRequest Number: ' + requestNum + '\n\nYou can now review and approve/reject this request.');
+        });
+        
+        function disableEmployeeFields() {
+            document.querySelectorAll('#approvalForm input:not([id*="Manager"]), #approvalForm select:not([id*="Manager"]), #approvalForm textarea:not([id*="Manager"])').forEach(field => {
+                if (field.id !== 'declaration') {
+                    field.disabled = true;
+                }
+            });
+        }
+        
+        function disableAllFields() {
+            document.querySelectorAll('#approvalForm input, #approvalForm select, #approvalForm textarea').forEach(field => {
+                field.disabled = true;
+            });
+        }
+        
+        function saveFormData() {
+            const requestNum = document.getElementById('requestNumber').value;
+            const formData = {
+                requestNumber: requestNum,
+                requestDate: document.getElementById('requestDate').value,
+                visitDate: document.getElementById('visitDate').value,
+                returnDate: document.getElementById('returnDate').value,
+                departureTime: document.getElementById('departureTime').value,
+                returnTime: document.getElementById('returnTime').value,
+                workType: document.getElementById('workType').value,
+                projectNameLocation: document.getElementById('projectNameLocation').value,
+                purpose: document.getElementById('purpose').value,
+                vehicleType: document.getElementById('vehicleType').value,
+                vehicleNumber: document.getElementById('vehicleNumber').value,
+                lineManagerEmail: document.getElementById('lineManagerEmail').value,
+                hrManagerEmail: document.getElementById('hrManagerEmail').value,
+                lineManagerName: document.getElementById('lineManagerName').value,
+                lineManagerStatus: document.getElementById('lineManagerStatus').value,
+                lineManagerComments: document.getElementById('lineManagerComments').value,
+                hrManagerName: document.getElementById('hrManagerName').value,
+                hrManagerStatus: document.getElementById('hrManagerStatus').value,
+                hrManagerComments: document.getElementById('hrManagerComments').value
+            };
+            localStorage.setItem('form_' + requestNum, JSON.stringify(formData));
+            return formData;
+        }
+        
+        function loadFormData(data) {
+            document.getElementById('requestNumber').value = data.requestNumber || '';
+            document.getElementById('requestDate').value = data.requestDate || '';
+            document.getElementById('visitDate').value = data.visitDate || '';
+            document.getElementById('returnDate').value = data.returnDate || '';
+            document.getElementById('departureTime').value = data.departureTime || '';
+            document.getElementById('returnTime').value = data.returnTime || '';
+            document.getElementById('workType').value = data.workType || '';
+            document.getElementById('projectNameLocation').value = data.projectNameLocation || '';
+            document.getElementById('purpose').value = data.purpose || '';
+            document.getElementById('vehicleType').value = data.vehicleType || '';
+            document.getElementById('vehicleNumber').value = data.vehicleNumber || '';
+            document.getElementById('lineManagerEmail').value = data.lineManagerEmail || '';
+            document.getElementById('hrManagerEmail').value = data.hrManagerEmail || '';
+            
+            if (data.lineManagerName) {
+                document.getElementById('lineManagerName').value = data.lineManagerName;
+                document.getElementById('lineManagerStatus').value = data.lineManagerStatus;
+                document.getElementById('lineManagerComments').value = data.lineManagerComments;
+                updateApprovalStatus('line-manager', data.lineManagerStatus);
+            }
+            
+            if (data.hrManagerName) {
+                document.getElementById('hrManagerName').value = data.hrManagerName;
+                document.getElementById('hrManagerStatus').value = data.hrManagerStatus;
+                document.getElementById('hrManagerComments').value = data.hrManagerComments;
+                updateApprovalStatus('hr-manager', data.hrManagerStatus);
+            }
+        }
+        
+        function updateApprovalStatus(manager, status) {
+            const badge = document.getElementById(manager === 'line-manager' ? 'lineManagerBadge' : 'hrManagerBadge');
+            const box = document.getElementById(manager === 'line-manager' ? 'lineManagerBox' : 'hrManagerBox');
+            const dateSpan = document.getElementById(manager === 'line-manager' ? 'lineManagerDate' : 'hrManagerDate');
+            
+            badge.className = 'approval-status-badge ' + status;
+            badge.textContent = status.toUpperCase();
+            
+            if (status === 'approved') {
+                box.classList.add('approved');
+                box.classList.remove('editable', 'rejected');
+            } else if (status === 'rejected') {
+                box.classList.add('rejected');
+                box.classList.remove('editable', 'approved');
+            }
+            
+            dateSpan.textContent = new Date().toLocaleString();
+        }
+        
+        // Add Employee
+        document.getElementById('addEmployeeBtn').addEventListener('click', function() {
+            employeeCount++;
+            const container = document.getElementById('employees-container');
+            
+            const employeeHTML = `
+                <div class="employee-section" data-employee="${employeeCount}">
+                    <div class="employee-header">
+                        <span class="employee-title">Employee ${employeeCount}</span>
+                        <button type="button" class="remove-btn" onclick="removeEmployee(this)">Remove</button>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Name <span class="required">*</span></label>
+                            <input type="text" class="employee-name" placeholder="Full name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Department <span class="required">*</span></label>
+                            <select class="employee-department" required>
+                                <option value="">-- Select --</option>
+                                <option value="interior_design">Interior Design</option>
+                                <option value="fitout">Fit-out Construction</option>
+                                <option value="mep">MEP Maintenance</option>
+                                <option value="property">Property Management</option>
+                                <option value="administration">Administration</option>
+                                <option value="hr">Human Resources</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Email <span class="required">*</span></label>
+                            <input type="email" class="employee-email" placeholder="email@company.com" required>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', employeeHTML);
+        });
+        
+        function removeEmployee(button) {
+            button.closest('.employee-section').remove();
+        }
+        
+        // Submit to Line Manager
+        document.getElementById('submitToLineManagerBtn').addEventListener('click', function() {
+            const form = document.getElementById('approvalForm');
+            if (!form.checkValidity()) {
+                alert('⚠️ Please fill all required fields marked with *');
+                form.reportValidity();
+                return;
+            }
+            
+            // Save form data
+            const formData = saveFormData();
+            
+            // Collect employee names
+            const employeeNames = Array.from(document.querySelectorAll('.employee-name'))
+                .map(input => input.value)
+                .filter(name => name)
+                .join(', ');
+            
+            const lineManagerEmail = document.getElementById('lineManagerEmail').value;
+            const lineManagerName = document.getElementById('lineManagerName').value || 'Line Manager';
+            const requestNumber = document.getElementById('requestNumber').value;
+            
+            // Create approval link
+            const approvalLink = window.location.href.split('?')[0] + '?mode=line-manager&req=' + requestNumber;
+            
+            // Add Line Manager Name field in approval section
+            const lineManagerNameForEmail = document.getElementById('lineManagerName').value;
+            
+            // Email content
+            const emailSubject = 'Site Visit Approval Request - ' + requestNumber;
+            const emailBody = `Dear ${lineManagerNameForEmail || 'Line Manager'},
+
+A site visit approval request has been submitted for your review.
+
+REQUEST DETAILS:
+- Request Number: ${requestNumber}
+- Employee(s): ${employeeNames}
+- Visit Date: ${formData.visitDate}
+- Project & Location: ${formData.projectNameLocation}
+- Purpose: ${formData.purpose}
+
+ACTION REQUIRED:
+Please click the link below to review and approve/reject this request:
+
+${approvalLink}
+
+Or copy and paste this link in your browser.
+
+Best regards,
+Zulfa Trading LLC`;
+
+            // HTML version for display with clickable link
+            const emailBodyHTML = `Dear ${lineManagerNameForEmail || 'Line Manager'},<br><br>
+
+A site visit approval request has been submitted for your review.<br><br>
+
+<strong>REQUEST DETAILS:</strong><br>
+- Request Number: ${requestNumber}<br>
+- Employee(s): ${employeeNames}<br>
+- Visit Date: ${formData.visitDate}<br>
+- Project & Location: ${formData.projectNameLocation}<br>
+- Purpose: ${formData.purpose}<br><br>
+
+<strong>ACTION REQUIRED:</strong><br>
+Please click the link below to review and approve/reject this request:<br><br>
+
+<a href="${approvalLink}" style="color: #1e5a96; font-weight: bold; text-decoration: underline;">${approvalLink}</a><br><br>
+
+Or copy and paste this link in your browser:<br>
+${approvalLink}<br><br>
+
+Best regards,<br>
+Zulfa Trading LLC`;
+
+            // Create modal with email info
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px;';
+            
+            const modalBox = document.createElement('div');
+            modalBox.style.cssText = 'background: white; padding: 25px; border-radius: 8px; max-width: 700px; max-height: 90vh; overflow-y: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.3);';
+            
+            modalBox.innerHTML = `
+                <h3 style="color: #1e5a96; margin-bottom: 15px;">📧 Send to Line Manager</h3>
+                <p style="margin-bottom: 15px;"><strong>To:</strong> ${lineManagerEmail}</p>
+                <p style="margin-bottom: 15px;"><strong>Subject:</strong> ${emailSubject}</p>
+                <hr style="margin: 15px 0;">
+                <p style="margin-bottom: 10px;"><strong>Email Message (HTML Preview):</strong></p>
+                <div id="emailPreview" style="border: 2px solid #1e5a96; border-radius: 4px; padding: 15px; background: #f9f9f9; margin-bottom: 15px; font-size: 12px; max-height: 300px; overflow-y: auto;">
+                    ${emailBodyHTML}
+                </div>
+                <p style="margin-bottom: 10px;"><strong>Plain Text Version (for copying):</strong></p>
+                <textarea id="emailContentBox" readonly style="width: 100%; height: 150px; padding: 10px; font-family: monospace; font-size: 11px; border: 2px solid #1e5a96; border-radius: 4px; resize: vertical;">${emailBody}</textarea>
+                <hr style="margin: 15px 0;">
+                <div style="background: #e3f2fd; padding: 12px; border-radius: 4px; margin: 15px 0;">
+                    <p style="font-size: 12px; margin-bottom: 8px;"><strong>📋 Instructions:</strong></p>
+                    <ol style="font-size: 11px; margin-left: 20px; line-height: 1.6;">
+                        <li>Click "Copy Email Content" below</li>
+                        <li>Open your email application (Gmail, Outlook, etc.)</li>
+                        <li>Create new email to: <strong>${lineManagerEmail}</strong></li>
+                        <li>Paste the content and send</li>
+                        <li><strong>Note:</strong> If your email supports HTML, the link will be clickable when pasted</li>
+                    </ol>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 15px;">
+                    <button id="copyEmailBtn" class="btn btn-success" style="padding: 10px 25px;">📋 Copy Text Version</button>
+                    <button id="copyHTMLBtn" class="btn btn-primary" style="padding: 10px 25px;">📋 Copy HTML Version</button>
+                    <button id="closeModalBtn" class="btn btn-warning" style="padding: 10px 25px;">Close</button>
+                </div>
+            `;
+            
+            modal.appendChild(modalBox);
+            document.body.appendChild(modal);
+            
+            // Copy text version button
+            document.getElementById('copyEmailBtn').onclick = function() {
+                const textarea = document.getElementById('emailContentBox');
+                textarea.select();
+                document.execCommand('copy');
+                this.textContent = '✅ Copied Text!';
+                this.style.background = '#27ae60';
+                setTimeout(() => {
+                    this.textContent = '📋 Copy Text Version';
+                    this.style.background = '';
+                }, 2000);
+            };
+            
+            // Copy HTML version button
+            document.getElementById('copyHTMLBtn').onclick = function() {
+                const htmlContent = emailBodyHTML;
+                const blob = new Blob([htmlContent], { type: 'text/html' });
+                const clipboardItem = new ClipboardItem({ 'text/html': blob });
+                
+                navigator.clipboard.write([clipboardItem]).then(() => {
+                    this.textContent = '✅ Copied HTML!';
+                    this.style.background = '#27ae60';
+                    setTimeout(() => {
+                        this.textContent = '📋 Copy HTML Version';
+                        this.style.background = '';
+                    }, 2000);
+                }).catch(() => {
+                    // Fallback: copy the HTML as text
+                    const temp = document.createElement('textarea');
+                    temp.value = htmlContent;
+                    document.body.appendChild(temp);
+                    temp.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(temp);
+                    
+                    this.textContent = '✅ Copied!';
+                    this.style.background = '#27ae60';
+                    setTimeout(() => {
+                        this.textContent = '📋 Copy HTML Version';
+                        this.style.background = '';
+                    }, 2000);
+                });
+            };
+            
+            // Close button
+            document.getElementById('closeModalBtn').onclick = function() {
+                document.body.removeChild(modal);
+            };
+            
+            // Close on outside click
+            modal.onclick = function(e) {
+                if (e.target === modal) {
+                    document.body.removeChild(modal);
+                }
+            };
+        });
+        
+        // Direct Manager/Supervisor Approve
+        document.getElementById('lineManagerApproveBtn').addEventListener('click', function() {
+            const managerName = prompt('Enter your name (Direct Manager/Supervisor):');
+            if (!managerName) return;
+            
+            document.getElementById('lineManagerName').value = managerName;
+            document.getElementById('lineManagerStatus').value = 'approved';
+            updateApprovalStatus('line-manager', 'approved');
+            
+            saveFormData();
+            
+            // Forward to HR
+            const requestNumber = document.getElementById('requestNumber').value;
+            const hrEmail = document.getElementById('hrManagerEmail').value;
+            const approvalLink = window.location.href.split('?')[0] + '?mode=hr-manager&req=' + requestNumber;
+            
+            alert('✅ Approved! Now forward to HR Manager:\n\nTo: ' + hrEmail + '\n\nRequest Number: ' + requestNumber + '\n\nAsk them to load this request in HR Manager Mode.');
+        });
+        
+        // Direct Manager/Supervisor Reject
+        document.getElementById('lineManagerRejectBtn').addEventListener('click', function() {
+            const reason = prompt('Enter rejection reason:');
+            if (!reason) return;
+            
+            const managerName = prompt('Enter your name (Direct Manager/Supervisor):');
+            if (!managerName) return;
+            
+            document.getElementById('lineManagerName').value = managerName;
+            document.getElementById('lineManagerStatus').value = 'rejected';
+            document.getElementById('lineManagerComments').value = reason;
+            updateApprovalStatus('line-manager', 'rejected');
+            
+            saveFormData();
+            alert('❌ Request rejected. Employee will be notified.');
+        });
+        
+        // HR Manager Approve
+        document.getElementById('hrManagerApproveBtn').addEventListener('click', function() {
+            const hrName = prompt('Enter your name (HR Manager):');
+            if (!hrName) return;
+            
+            document.getElementById('hrManagerName').value = hrName;
+            document.getElementById('hrManagerStatus').value = 'approved';
+            updateApprovalStatus('hr-manager', 'approved');
+            
+            saveFormData();
+            alert('✅ Final approval granted! Request is now complete. You can print or save as PDF.');
+            
+            // Update to completed mode
+            loadFormMode('completed', document.getElementById('requestNumber').value);
+        });
+        
+        // HR Manager Reject
+        document.getElementById('hrManagerRejectBtn').addEventListener('click', function() {
+            const reason = prompt('Enter rejection reason:');
+            if (!reason) return;
+            
+            const hrName = prompt('Enter your name (HR Manager):');
+            if (!hrName) return;
+            
+            document.getElementById('hrManagerName').value = hrName;
+            document.getElementById('hrManagerStatus').value = 'rejected';
+            document.getElementById('hrManagerComments').value = reason;
+            updateApprovalStatus('hr-manager', 'rejected');
+            
+            saveFormData();
+            alert('❌ Request rejected by HR. Employee will be notified.');
+        });
+        
+        // Print button
+        document.getElementById('printBtn').addEventListener('click', function() {
+            window.print();
+        });
+        
+        // PDF button
+        document.getElementById('pdfBtn').addEventListener('click', function() {
+            alert('💾 To save as PDF:\n\n1. Print dialog will open\n2. Select "Save as PDF" or "Microsoft Print to PDF"\n3. Choose location and save');
+            setTimeout(() => window.print(), 500);
+        });
+    </script>
+</body>
+</html>
