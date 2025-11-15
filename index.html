@@ -68,9 +68,11 @@
         }
         
         .company-logo {
-            height: 100px;
+            height: 120px;
             width: auto;
             display: none;
+            max-width: 350px;
+            object-fit: contain;
         }
         
         .company-logo[src]:not([src=""]) {
@@ -165,6 +167,18 @@
             border-radius: 3px;
             font-size: 10px;
             font-family: Arial, sans-serif;
+        }
+        
+        .form-group input[type="time"] {
+            padding: 4px 6px;
+            cursor: pointer;
+            background: white;
+        }
+        
+        .form-group input[type="time"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            font-size: 14px;
+            padding: 2px;
         }
         
         .form-group input:disabled,
@@ -441,7 +455,7 @@
     <div class="container">
         <div class="header">
             <div class="logo-section">
-                <img src="zulfa-logo.jpg" alt="Zulfa Trading LLC" class="company-logo" id="companyLogo">
+                <img src="" alt="Zulfa Trading LLC" class="company-logo" id="companyLogo">
                 
                 <div class="logo-placeholder">
                     <div class="logo-placeholder-title">INSERT LOGO HERE</div>
