@@ -455,7 +455,7 @@
     <div class="container">
         <div class="header">
             <div class="logo-section">
-                <img src="Zulfa logo.jpeg" alt="Zulfa Trading LLC" class="company-logo" id="companyLogo">
+                <img src="" alt="Zulfa Trading LLC" class="company-logo" id="companyLogo">
                 
                 <div class="logo-placeholder">
                     <div class="logo-placeholder-title">INSERT LOGO HERE</div>
@@ -730,9 +730,37 @@
         let employeeCount = 1;
         let currentMode = 'employee';
         
-        // Generate request number
-        document.getElementById('requestNumber').value = 'REQ-' + Date.now();
+        // Generate request number only if not loading from URL
+        if (!urlParams.get('req')) {
+            document.getElementById('requestNumber').value = 'REQ-' + Date.now();
+        }
         document.getElementById('requestDate').value = new Date().toISOString().split('T')[0];
+        
+        // Check URL parameters for mode and load data
+        const urlParams = new URLSearchParams(window.location.search);
+        const mode = urlParams.get('mode');
+        const reqNum = urlParams.get('req');
+        
+        // If mode is specified in URL, switch to that mode
+        if (mode && (mode === 'line-manager' || mode === 'hr-manager')) {
+            switchMode(mode);
+            
+            // If request number is in URL, try to load it
+            if (reqNum) {
+                document.getElementById('loadRequestNumber').value = reqNum;
+                
+                // Auto-load the request
+                setTimeout(() => {
+                    const savedData = localStorage.getItem('form_' + reqNum);
+                    if (savedData) {
+                        loadFormData(JSON.parse(savedData));
+                        alert('✅ Request loaded successfully!\n\nRequest Number: ' + reqNum);
+                    } else {
+                        alert('⚠️ Request data not found locally.\n\nRequest Number: ' + reqNum + '\n\nPlease enter the request number manually and click "Load Request".\n\nNote: The employee who submitted the request should share the form data with you.');
+                    }
+                }, 500);
+            }
+        }
         
         // Mode switching function
         function switchMode(mode) {
@@ -827,14 +855,7 @@
                 return;
             }
             
-            const savedData = localStorage.getItem('form_' + requestNum);
-            if (!savedData) {
-                alert('❌ Request not found: ' + requestNum + '\n\nPlease check the request number and try again.');
-                return;
-            }
-            
-            loadFormData(JSON.parse(savedData));
-            alert('✅ Request loaded successfully!\n\nRequest Number: ' + requestNum + '\n\nYou can now review and approve/reject this request.');
+            loadRequestFromSheet(requestNum);
         });
         
         function disableEmployeeFields() {
@@ -849,63 +870,6 @@
             document.querySelectorAll('#approvalForm input, #approvalForm select, #approvalForm textarea').forEach(field => {
                 field.disabled = true;
             });
-        }
-        
-        function saveFormData() {
-            const requestNum = document.getElementById('requestNumber').value;
-            const formData = {
-                requestNumber: requestNum,
-                requestDate: document.getElementById('requestDate').value,
-                visitDate: document.getElementById('visitDate').value,
-                returnDate: document.getElementById('returnDate').value,
-                departureTime: document.getElementById('departureTime').value,
-                returnTime: document.getElementById('returnTime').value,
-                workType: document.getElementById('workType').value,
-                projectNameLocation: document.getElementById('projectNameLocation').value,
-                purpose: document.getElementById('purpose').value,
-                vehicleType: document.getElementById('vehicleType').value,
-                vehicleNumber: document.getElementById('vehicleNumber').value,
-                lineManagerEmail: document.getElementById('lineManagerEmail').value,
-                hrManagerEmail: document.getElementById('hrManagerEmail').value,
-                lineManagerName: document.getElementById('lineManagerName').value,
-                lineManagerStatus: document.getElementById('lineManagerStatus').value,
-                lineManagerComments: document.getElementById('lineManagerComments').value,
-                hrManagerName: document.getElementById('hrManagerName').value,
-                hrManagerStatus: document.getElementById('hrManagerStatus').value,
-                hrManagerComments: document.getElementById('hrManagerComments').value
-            };
-            localStorage.setItem('form_' + requestNum, JSON.stringify(formData));
-            return formData;
-        }
-        
-        function loadFormData(data) {
-            document.getElementById('requestNumber').value = data.requestNumber || '';
-            document.getElementById('requestDate').value = data.requestDate || '';
-            document.getElementById('visitDate').value = data.visitDate || '';
-            document.getElementById('returnDate').value = data.returnDate || '';
-            document.getElementById('departureTime').value = data.departureTime || '';
-            document.getElementById('returnTime').value = data.returnTime || '';
-            document.getElementById('workType').value = data.workType || '';
-            document.getElementById('projectNameLocation').value = data.projectNameLocation || '';
-            document.getElementById('purpose').value = data.purpose || '';
-            document.getElementById('vehicleType').value = data.vehicleType || '';
-            document.getElementById('vehicleNumber').value = data.vehicleNumber || '';
-            document.getElementById('lineManagerEmail').value = data.lineManagerEmail || '';
-            document.getElementById('hrManagerEmail').value = data.hrManagerEmail || '';
-            
-            if (data.lineManagerName) {
-                document.getElementById('lineManagerName').value = data.lineManagerName;
-                document.getElementById('lineManagerStatus').value = data.lineManagerStatus;
-                document.getElementById('lineManagerComments').value = data.lineManagerComments;
-                updateApprovalStatus('line-manager', data.lineManagerStatus);
-            }
-            
-            if (data.hrManagerName) {
-                document.getElementById('hrManagerName').value = data.hrManagerName;
-                document.getElementById('hrManagerStatus').value = data.hrManagerStatus;
-                document.getElementById('hrManagerComments').value = data.hrManagerComments;
-                updateApprovalStatus('hr-manager', data.hrManagerStatus);
-            }
         }
         
         function updateApprovalStatus(manager, status) {
@@ -1084,6 +1048,10 @@ Zulfa Trading LLC`;
             modal.appendChild(modalBox);
             document.body.appendChild(modal);
             
+            // Re-enable submit button
+            document.getElementById('submitToLineManagerBtn').disabled = false;
+            document.getElementById('submitToLineManagerBtn').textContent = 'Submit to Direct Manager/Supervisor';
+            
             // Copy text version button
             document.getElementById('copyEmailBtn').onclick = function() {
                 const textarea = document.getElementById('emailContentBox');
@@ -1142,72 +1110,158 @@ Zulfa Trading LLC`;
         });
         
         // Direct Manager/Supervisor Approve
-        document.getElementById('lineManagerApproveBtn').addEventListener('click', function() {
+        document.getElementById('lineManagerApproveBtn').addEventListener('click', async function() {
             const managerName = prompt('Enter your name (Direct Manager/Supervisor):');
             if (!managerName) return;
             
+            const requestNumber = document.getElementById('requestNumber').value;
+            
+            // Update locally first
             document.getElementById('lineManagerName').value = managerName;
             document.getElementById('lineManagerStatus').value = 'approved';
             updateApprovalStatus('line-manager', 'approved');
             
-            saveFormData();
-            
-            // Forward to HR
-            const requestNumber = document.getElementById('requestNumber').value;
-            const hrEmail = document.getElementById('hrManagerEmail').value;
-            const approvalLink = window.location.href.split('?')[0] + '?mode=hr-manager&req=' + requestNumber;
-            
-            alert('✅ Approved! Now forward to HR Manager:\n\nTo: ' + hrEmail + '\n\nRequest Number: ' + requestNumber + '\n\nAsk them to load this request in HR Manager Mode.');
+            // Update in Google Sheets
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'updateApproval',
+                        requestNumber: requestNumber,
+                        approverType: 'lineManager',
+                        name: managerName,
+                        status: 'approved',
+                        comments: document.getElementById('lineManagerComments').value || ''
+                    })
+                });
+                
+                const hrEmail = document.getElementById('hrManagerEmail').value;
+                const approvalLink = window.location.href.split('?')[0] + '?mode=hr-manager&req=' + requestNumber;
+                
+                alert('✅ Approved successfully!\n\nData saved to Google Sheets.\n\nNow forward to HR Manager:\n\nTo: ' + hrEmail + '\n\nApproval Link:\n' + approvalLink);
+            } catch (error) {
+                alert('⚠️ Approval recorded locally but may not have synced to Google Sheets.\n\nError: ' + error.message);
+            }
         });
         
         // Direct Manager/Supervisor Reject
-        document.getElementById('lineManagerRejectBtn').addEventListener('click', function() {
+        document.getElementById('lineManagerRejectBtn').addEventListener('click', async function() {
             const reason = prompt('Enter rejection reason:');
             if (!reason) return;
             
             const managerName = prompt('Enter your name (Direct Manager/Supervisor):');
             if (!managerName) return;
             
+            const requestNumber = document.getElementById('requestNumber').value;
+            
+            // Update locally
             document.getElementById('lineManagerName').value = managerName;
             document.getElementById('lineManagerStatus').value = 'rejected';
             document.getElementById('lineManagerComments').value = reason;
             updateApprovalStatus('line-manager', 'rejected');
             
-            saveFormData();
-            alert('❌ Request rejected. Employee will be notified.');
+            // Update in Google Sheets
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'updateApproval',
+                        requestNumber: requestNumber,
+                        approverType: 'lineManager',
+                        name: managerName,
+                        status: 'rejected',
+                        comments: reason
+                    })
+                });
+                
+                alert('❌ Request rejected.\n\nData saved to Google Sheets.\n\nEmployee will be notified.');
+            } catch (error) {
+                alert('⚠️ Rejection recorded locally but may not have synced to Google Sheets.\n\nError: ' + error.message);
+            }
         });
         
         // HR Manager Approve
-        document.getElementById('hrManagerApproveBtn').addEventListener('click', function() {
+        document.getElementById('hrManagerApproveBtn').addEventListener('click', async function() {
             const hrName = prompt('Enter your name (HR Manager):');
             if (!hrName) return;
             
+            const requestNumber = document.getElementById('requestNumber').value;
+            
+            // Update locally
             document.getElementById('hrManagerName').value = hrName;
             document.getElementById('hrManagerStatus').value = 'approved';
             updateApprovalStatus('hr-manager', 'approved');
             
-            saveFormData();
-            alert('✅ Final approval granted! Request is now complete. You can print or save as PDF.');
-            
-            // Update to completed mode
-            loadFormMode('completed', document.getElementById('requestNumber').value);
+            // Update in Google Sheets
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'updateApproval',
+                        requestNumber: requestNumber,
+                        approverType: 'hrManager',
+                        name: hrName,
+                        status: 'approved',
+                        comments: document.getElementById('hrManagerComments').value || ''
+                    })
+                });
+                
+                alert('✅ Final approval granted!\n\nData saved to Google Sheets.\n\nRequest is now complete. You can print or save as PDF.');
+            } catch (error) {
+                alert('⚠️ Approval recorded locally but may not have synced to Google Sheets.\n\nError: ' + error.message);
+            }
         });
         
         // HR Manager Reject
-        document.getElementById('hrManagerRejectBtn').addEventListener('click', function() {
+        document.getElementById('hrManagerRejectBtn').addEventListener('click', async function() {
             const reason = prompt('Enter rejection reason:');
             if (!reason) return;
             
             const hrName = prompt('Enter your name (HR Manager):');
             if (!hrName) return;
             
+            const requestNumber = document.getElementById('requestNumber').value;
+            
+            // Update locally
             document.getElementById('hrManagerName').value = hrName;
             document.getElementById('hrManagerStatus').value = 'rejected';
             document.getElementById('hrManagerComments').value = reason;
             updateApprovalStatus('hr-manager', 'rejected');
             
-            saveFormData();
-            alert('❌ Request rejected by HR. Employee will be notified.');
+            // Update in Google Sheets
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'updateApproval',
+                        requestNumber: requestNumber,
+                        approverType: 'hrManager',
+                        name: hrName,
+                        status: 'rejected',
+                        comments: reason
+                    })
+                });
+                
+                alert('❌ Request rejected by HR.\n\nData saved to Google Sheets.\n\nEmployee will be notified.');
+            } catch (error) {
+                alert('⚠️ Rejection recorded locally but may not have synced to Google Sheets.\n\nError: ' + error.message);
+            }
         });
         
         // Print button
