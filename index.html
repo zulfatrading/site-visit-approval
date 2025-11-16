@@ -70,17 +70,13 @@
         .company-logo {
             height: 120px;
             width: auto;
-            display: none;
             max-width: 350px;
             object-fit: contain;
+            display: block !important;
         }
         
-        .company-logo[src]:not([src=""]) {
-            display: block;
-        }
-        
-        .company-logo[src]:not([src=""]) ~ .logo-placeholder {
-            display: none;
+        .logo-placeholder {
+            display: none !important;
         }
         
         .form-title-section {
@@ -669,7 +665,7 @@
                     <h3>HR MANAGER APPROVAL</h3>
                     <div class="form-group" style="margin-bottom: 6px;">
                         <label>Name <span class="required">*</span></label>
-                        <input type="text" id="hrManagerName" placeholder="Enter HR manager's name" required>
+                        <input type="text" id="hrManagerName" placeholder="Enter HR manager's name" required style="background: white;">
                     </div>
                     <div class="form-group" style="margin-bottom: 6px;">
                         <label>Email <span class="required">*</span></label>
