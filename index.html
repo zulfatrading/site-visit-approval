@@ -445,7 +445,45 @@
                 margin: 10mm;
             }
         }
-    </style>
+    </style><        /* ✅ ADD THIS CSS TO FIX DATE INPUTS */
+        input[type="date"] {
+            position: relative;
+        }
+
+        input[type="date"]:invalid {
+            color: #999;
+        }
+
+        input[type="date"]:valid {
+            color: #000;
+        }
+
+        /* Ensure date inputs work properly */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            background: transparent;
+            bottom: 0;
+            color: transparent;
+            cursor: pointer;
+            height: auto;
+            left: 0;
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: auto;
+        }
+
+        /* Additional fix for date placeholder */
+        input[type="date"]:before {
+            content: attr(placeholder);
+            position: absolute;
+            color: #999;
+        }
+
+        input[type="date"]:focus:before,
+        input[type="date"]:valid:before {
+            content: "";
+        }
+   
 </head>
 <body>
     <div class="container">
