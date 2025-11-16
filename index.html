@@ -725,7 +725,7 @@
     <script>
         let employeeCount = 1;
         let currentMode = 'employee';
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyEyhfiE6lmhB9nlrRTUbme6HO6lhbrTf7_n-0oFV1nSypsJvI64uIluJzcM-7CQ7sw/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw90xmaI3AmkZXpjDy3jvgexviHb0kfdm1JaEcvIc2cQeG77hyWM1g3arAGcK-ehIUd/exec';
         
         // ✅ FIXED: Declare variables first
         const urlParams = new URLSearchParams(window.location.search);
@@ -1038,14 +1038,67 @@
         }
         
         // Submit to Line Manager
-        document.getElementById('submitToLineManagerBtn').addEventListener('click', function() {
-            const form = document.getElementById('approvalForm');
-            if (!form.checkValidity()) {
-                alert('⚠️ Please fill all required fields marked with *');
-                form.reportValidity();
-                return;
+        document.getElementById('submitToLineManagerBtn').addEventListener('click', async function() {
+    const form = document.getElementById('approvalForm');
+    if (!form.checkValidity()) {
+        alert('⚠️ Please fill all required fields marked with *');
+        form.reportValidity();
+        return;
             }
+// Disable button to prevent double submission
+    this.disabled = true;
+    this.textContent = 'Submitting...';
+    
+    try {
+        // 1. Save form data locally
+        const formData = saveFormData();
+        
+        // 2. Submit to Google Sheets
+        const sheetsResponse = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'submitForm',
+                ...formData
+            })
+        });
+        
+        const result = await sheetsResponse.json();
+        
+        if (result.success) {
+            // Continue with email creation as before
+            const employeeNames = Array.from(document.querySelectorAll('.employee-name'))
+                .map(input => input.value)
+                .filter(name => name)
+                .join(', ');
             
+            const lineManagerEmail = document.getElementById('lineManagerEmail').value;
+            const requestNumber = document.getElementById('requestNumber').value;
+            
+            // Create approval link
+            const approvalLink = window.location.href.split('?')[0] + '?mode=line-manager&req=' + requestNumber;
+            
+            // ... (rest of your email creation code)
+            
+            alert('✅ Request submitted successfully!\n\nData saved to Google Sheets.\n\nRequest Number: ' + requestNumber);
+            
+        } else {
+            throw new Error(result.error || 'Failed to save to Google Sheets');
+        }
+        
+    } catch (error) {
+        console.error('Submission error:', error);
+        alert('⚠️ Form saved locally but Google Sheets submission failed.\n\nError: ' + error.message + '\n\nYou can still send the approval email manually.');
+    } finally {
+        // Re-enable button
+        this.disabled = false;
+        this.textContent = 'Submit to Direct Manager/Supervisor';
+    }
+    
+    // Continue with your existing email modal code...
+});            
             // Save form data
             const formData = saveFormData();
             
