@@ -1224,30 +1224,32 @@ Zulfa Trading LLC`;
             updateApprovalStatus('line-manager', 'approved');
             
             // Update in Google Sheets
-            try {
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        action: 'updateApproval',
-                        requestNumber: requestNumber,
-                        approverType: 'lineManager',
-                        name: managerName,
-                        status: 'approved',
-                        comments: document.getElementById('lineManagerComments').value || ''
-                    })
-                });
-                
-                const hrEmail = document.getElementById('hrManagerEmail').value;
-                const approvalLink = window.location.href.split('?')[0] + '?mode=hr-manager&req=' + requestNumber;
-                
-                alert('✅ Approved successfully!\n\nData saved to Google Sheets.\n\nNow forward to HR Manager:\n\nTo: ' + hrEmail + '\n\nApproval Link:\n' + approvalLink);
-            } catch (error) {
-                alert('⚠️ Approval recorded locally but may not have synced to Google Sheets.\n\nError: ' + error.message);
-            }
+            // Replace your current fetch calls with this pattern:
+try {
+    const response = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            action: 'updateApproval',
+            requestNumber: requestNumber,
+            approverType: 'lineManager',
+            name: managerName,
+            status: 'approved',
+            comments: document.getElementById('lineManagerComments').value || ''
+        })
+    });
+    
+    const result = await response.json();
+    if (result.success) {
+        alert('✅ Approved successfully!\n\nData saved to Google Sheets.');
+    } else {
+        alert('⚠️ Approved locally but Google Sheets error: ' + result.error);
+    }
+} catch (error) {
+    alert('✅ Approved successfully!\n\nData saved locally. Google Sheets sync failed: ' + error.message);
+}
         });
         
         // Direct Manager/Supervisor Reject
