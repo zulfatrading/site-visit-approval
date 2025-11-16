@@ -766,7 +766,7 @@ input[type="date"]:valid:before {
     <script>
     let employeeCount = 1;
     let currentMode = 'employee';
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyEyhfiE6lmhB9nlrRTUbme6HO6lhbrTf7_n-0oFV1nSypsJvI64uIluJzcM-7CQ7sw/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyyf2pZlKe8U44HXw1ZspGEmL4KTh3BhjJpVYzgu9C96ipB6Bnnvv43Heo9o3PhPBaH/exec';
     
     // ✅ FIXED: Declare variables first
     const urlParams = new URLSearchParams(window.location.search);
@@ -1212,7 +1212,7 @@ Zulfa Trading LLC`;
         }
     }
 
-    // Print and PDF buttons
+        // Print and PDF buttons
     document.getElementById('printBtn').addEventListener('click', function() {
         window.print();
     });
@@ -1221,6 +1221,48 @@ Zulfa Trading LLC`;
         alert('💾 To save as PDF: Use Print dialog and select "Save as PDF"');
         setTimeout(() => window.print(), 500);
     });
+
+    // ✅ ADD TEST FUNCTION HERE
+    // Test function - you can run this from browser console
+    async function testConnection() {
+        try {
+            console.log('Testing connection to Google Apps Script...');
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'submitForm',
+                    requestNumber: 'TEST-' + Date.now(),
+                    requestDate: '2024-01-01',
+                    visitDate: '2024-01-02',
+                    returnDate: '2024-01-02',
+                    departureTime: '09:00',
+                    returnTime: '17:00',
+                    workType: 'site_inspection',
+                    projectNameLocation: 'Test Location',
+                    purpose: 'Test purpose',
+                    vehicleType: 'company',
+                    vehicleNumber: '',
+                    lineManagerName: 'Test Manager',
+                    lineManagerEmail: 'manager@test.com',
+                    hrManagerName: 'Test HR',
+                    hrManagerEmail: 'hr@test.com',
+                    employees: [{name: 'Test Employee', department: 'interior_design', email: 'test@test.com'}]
+                })
+            });
+            
+            const result = await response.json();
+            console.log('Test result:', result);
+            alert('Test completed: ' + JSON.stringify(result));
+            return result;
+        } catch (error) {
+            console.error('Test failed:', error);
+            alert('Test failed: ' + error.message);
+        }
+    }
+
 </script>
 </body>
 </html>
