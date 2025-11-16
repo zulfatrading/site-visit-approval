@@ -723,36 +723,38 @@
     </div>
     
     <script>
+        // Parse URL params first (fix: ensure urlParams exists before any use)
+        const urlParams = new URLSearchParams(window.location.search);
+        const modeParam = urlParams.get('mode');
+        const reqNumParam = urlParams.get('req');
+
         let employeeCount = 1;
         let currentMode = 'employee';
         
         // Generate request number only if not loading from URL
-        if (!urlParams.get('req')) {
+        if (!reqNumParam) {
             document.getElementById('requestNumber').value = 'REQ-' + Date.now();
+        } else {
+            document.getElementById('requestNumber').value = reqNumParam;
         }
         document.getElementById('requestDate').value = new Date().toISOString().split('T')[0];
         
-        // Check URL parameters for mode and load data
-        const urlParams = new URLSearchParams(window.location.search);
-        const mode = urlParams.get('mode');
-        const reqNum = urlParams.get('req');
-        
         // If mode is specified in URL, switch to that mode
-        if (mode && (mode === 'line-manager' || mode === 'hr-manager')) {
-            switchMode(mode);
+        if (modeParam && (modeParam === 'line-manager' || modeParam === 'hr-manager')) {
+            switchMode(modeParam);
             
             // If request number is in URL, try to load it
-            if (reqNum) {
-                document.getElementById('loadRequestNumber').value = reqNum;
+            if (reqNumParam) {
+                document.getElementById('loadRequestNumber').value = reqNumParam;
                 
                 // Auto-load the request
                 setTimeout(() => {
-                    const savedData = localStorage.getItem('form_' + reqNum);
+                    const savedData = localStorage.getItem('form_' + reqNumParam);
                     if (savedData) {
                         loadFormData(JSON.parse(savedData));
-                        alert('✅ Request loaded successfully!\n\nRequest Number: ' + reqNum);
+                        alert('✅ Request loaded successfully!\n\nRequest Number: ' + reqNumParam);
                     } else {
-                        alert('⚠️ Request data not found locally.\n\nRequest Number: ' + reqNum + '\n\nPlease enter the request number manually and click "Load Request".\n\nNote: The employee who submitted the request should share the form data with you.');
+                        alert('⚠️ Request data not found locally.\n\nRequest Number: ' + reqNumParam + '\n\nPlease enter the request number manually and click "Load Request".\n\nNote: The employee who submitted the request must have submitted from this browser (data saved in localStorage).');
                     }
                 }, 500);
             }
@@ -784,9 +786,10 @@
                 infoBox.style.display = 'block';
                 loadRequestSection.style.display = 'none';
                 
-                // Enable employee fields
-                document.querySelectorAll('#approvalForm input:not([id*="Manager"]), #approvalForm select:not([id*="Manager"]), #approvalForm textarea:not([id*="Manager"])').forEach(field => {
-                    if (field.id !== 'requestNumber') {
+                // Enable employee fields (exclude manager fields)
+                document.querySelectorAll('#approvalForm input, #approvalForm select, #approvalForm textarea').forEach(field => {
+                    // manager fields start with lineManager* or hrManager*
+                    if (!field.id.startsWith('lineManager') && !field.id.startsWith('hrManager') && field.id !== 'requestNumber') {
                         field.disabled = false;
                     }
                 });
@@ -854,8 +857,9 @@
         });
         
         function disableEmployeeFields() {
-            document.querySelectorAll('#approvalForm input:not([id*="Manager"]), #approvalForm select:not([id*="Manager"]), #approvalForm textarea:not([id*="Manager"])').forEach(field => {
-                if (field.id !== 'declaration') {
+            document.querySelectorAll('#approvalForm input, #approvalForm select, #approvalForm textarea').forEach(field => {
+                // allow manager fields to remain enabled depending on mode
+                if (!field.id.startsWith('lineManager') && !field.id.startsWith('hrManager') && field.id !== 'declaration') {
                     field.disabled = true;
                 }
             });
@@ -881,6 +885,9 @@
             } else if (status === 'rejected') {
                 box.classList.add('rejected');
                 box.classList.remove('editable', 'approved');
+            } else {
+                box.classList.remove('approved', 'rejected');
+                box.classList.remove('editable');
             }
             
             dateSpan.textContent = new Date().toLocaleString();
@@ -930,6 +937,165 @@
             button.closest('.employee-section').remove();
         }
         
+        // Save form data to localStorage and return a JS object
+        function saveFormData() {
+            const requestNumber = document.getElementById('requestNumber').value || ('REQ-' + Date.now());
+            const data = {
+                requestNumber: requestNumber,
+                requestDate: document.getElementById('requestDate').value,
+                visitDate: document.getElementById('visitDate').value,
+                returnDate: document.getElementById('returnDate').value,
+                departureTime: document.getElementById('departureTime').value,
+                returnTime: document.getElementById('returnTime').value,
+                workType: document.getElementById('workType').value,
+                projectNameLocation: document.getElementById('projectNameLocation').value,
+                purpose: document.getElementById('purpose').value,
+                vehicleType: document.getElementById('vehicleType').value,
+                vehicleNumber: document.getElementById('vehicleNumber').value,
+                employees: [],
+                lineManagerName: document.getElementById('lineManagerName').value,
+                lineManagerEmail: document.getElementById('lineManagerEmail').value,
+                lineManagerStatus: document.getElementById('lineManagerStatus').value,
+                lineManagerComments: document.getElementById('lineManagerComments').value,
+                hrManagerName: document.getElementById('hrManagerName').value,
+                hrManagerEmail: document.getElementById('hrManagerEmail').value,
+                hrManagerStatus: document.getElementById('hrManagerStatus').value,
+                hrManagerComments: document.getElementById('hrManagerComments').value,
+                declaration: document.getElementById('declaration').checked
+            };
+            
+            document.querySelectorAll('.employee-section').forEach(section => {
+                const name = section.querySelector('.employee-name') ? section.querySelector('.employee-name').value : '';
+                const dept = section.querySelector('.employee-department') ? section.querySelector('.employee-department').value : '';
+                const email = section.querySelector('.employee-email') ? section.querySelector('.employee-email').value : '';
+                data.employees.push({ name, dept, email });
+            });
+            
+            localStorage.setItem('form_' + requestNumber, JSON.stringify(data));
+            return data;
+        }
+        
+        // Populate form from saved data object
+        function loadFormData(data) {
+            if (!data) return;
+            document.getElementById('requestNumber').value = data.requestNumber || '';
+            document.getElementById('requestDate').value = data.requestDate || '';
+            document.getElementById('visitDate').value = data.visitDate || '';
+            document.getElementById('returnDate').value = data.returnDate || '';
+            document.getElementById('departureTime').value = data.departureTime || '';
+            document.getElementById('returnTime').value = data.returnTime || '';
+            document.getElementById('workType').value = data.workType || '';
+            document.getElementById('projectNameLocation').value = data.projectNameLocation || '';
+            document.getElementById('purpose').value = data.purpose || '';
+            document.getElementById('vehicleType').value = data.vehicleType || '';
+            document.getElementById('vehicleNumber').value = data.vehicleNumber || '';
+            document.getElementById('lineManagerName').value = data.lineManagerName || '';
+            document.getElementById('lineManagerEmail').value = data.lineManagerEmail || '';
+            document.getElementById('lineManagerStatus').value = data.lineManagerStatus || 'pending';
+            document.getElementById('lineManagerComments').value = data.lineManagerComments || '';
+            document.getElementById('hrManagerName').value = data.hrManagerName || '';
+            document.getElementById('hrManagerEmail').value = data.hrManagerEmail || '';
+            document.getElementById('hrManagerStatus').value = data.hrManagerStatus || 'pending';
+            document.getElementById('hrManagerComments').value = data.hrManagerComments || '';
+            document.getElementById('declaration').checked = !!data.declaration;
+            
+            // Rebuild employees
+            const container = document.getElementById('employees-container');
+            container.innerHTML = '';
+            if (Array.isArray(data.employees) && data.employees.length) {
+                employeeCount = 0;
+                data.employees.forEach((emp, idx) => {
+                    employeeCount++;
+                    const empHTML = `
+                        <div class="employee-section" data-employee="${employeeCount}">
+                            <div class="employee-header">
+                                <span class="employee-title">Employee ${employeeCount}${idx === 0 ? ' (Primary)' : ''}</span>
+                                ${idx === 0 ? '' : '<button type="button" class="remove-btn" onclick="removeEmployee(this)">Remove</button>'}
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Name <span class="required">*</span></label>
+                                    <input type="text" class="employee-name" placeholder="Full name" required value="${escapeHtml(emp.name || '')}">
+                                </div>
+                                <div class="form-group">
+                                    <label>Department <span class="required">*</span></label>
+                                    <select class="employee-department" required>
+                                        <option value="">-- Select --</option>
+                                        <option value="interior_design" ${emp.dept === 'interior_design' ? 'selected' : ''}>Interior Design</option>
+                                        <option value="fitout" ${emp.dept === 'fitout' ? 'selected' : ''}>Fit-out Construction</option>
+                                        <option value="mep" ${emp.dept === 'mep' ? 'selected' : ''}>MEP Maintenance</option>
+                                        <option value="property" ${emp.dept === 'property' ? 'selected' : ''}>Property Management</option>
+                                        <option value="administration" ${emp.dept === 'administration' ? 'selected' : ''}>Administration</option>
+                                        <option value="hr" ${emp.dept === 'hr' ? 'selected' : ''}>Human Resources</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Email <span class="required">*</span></label>
+                                    <input type="email" class="employee-email" placeholder="email@company.com" required value="${escapeHtml(emp.email || '')}">
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', empHTML);
+                });
+            } else {
+                // if no employees present, create a default primary
+                employeeCount = 1;
+                const defaultHTML = `
+                    <div class="employee-section" data-employee="1">
+                        <div class="employee-header">
+                            <span class="employee-title">Employee 1 (Primary)</span>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Name <span class="required">*</span></label>
+                                <input type="text" class="employee-name" placeholder="Full name" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Department <span class="required">*</span></label>
+                                <select class="employee-department" required>
+                                    <option value="">-- Select --</option>
+                                    <option value="interior_design">Interior Design</option>
+                                    <option value="fitout">Fit-out Construction</option>
+                                    <option value="mep">MEP Maintenance</option>
+                                    <option value="property">Property Management</option>
+                                    <option value="administration">Administration</option>
+                                    <option value="hr">Human Resources</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Email <span class="required">*</span></label>
+                                <input type="email" class="employee-email" placeholder="email@company.com" required>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML = defaultHTML;
+            }
+            
+            // Update badges according to saved statuses
+            updateApprovalStatus('line-manager', document.getElementById('lineManagerStatus').value || 'pending');
+            updateApprovalStatus('hr-manager', document.getElementById('hrManagerStatus').value || 'pending');
+        }
+        
+        // Simple sanitizer for injecting values into HTML
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>"'`]/g, function (s) {
+                return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;',"`":'&#x60;'}[s];
+            });
+        }
+        
+        function loadRequestFromSheet(requestNum) {
+            const savedData = localStorage.getItem('form_' + requestNum);
+            if (savedData) {
+                loadFormData(JSON.parse(savedData));
+                alert('✅ Request loaded: ' + requestNum);
+            } else {
+                alert('⚠️ Request not found locally: ' + requestNum);
+            }
+        }
+        
         // Submit to Line Manager
         document.getElementById('submitToLineManagerBtn').addEventListener('click', function() {
             const form = document.getElementById('approvalForm');
@@ -953,15 +1119,12 @@
             const requestNumber = document.getElementById('requestNumber').value;
             
             // Create approval link
-            const approvalLink = window.location.href.split('?')[0] + '?mode=line-manager&req=' + requestNumber;
+            const approvalLink = window.location.href.split('?')[0] + '?mode=line-manager&req=' + encodeURIComponent(requestNumber);
             
-            // Add Line Manager Name field in approval section
-            const lineManagerNameForEmail = document.getElementById('lineManagerName').value;
-            
-            // Email content
+            // Email content (plain text)
             const emailSubject = 'Site Visit Approval Request - ' + requestNumber;
-            const emailBody = `Dear ${lineManagerNameForEmail || 'Line Manager'},
-
+            const emailBody = `Dear ${lineManagerName},
+            
 A site visit approval request has been submitted for your review.
 
 REQUEST DETAILS:
@@ -980,294 +1143,62 @@ Or copy and paste this link in your browser.
 
 Best regards,
 Zulfa Trading LLC`;
-
-            // HTML version for display with clickable link
-            const emailBodyHTML = `Dear ${lineManagerNameForEmail || 'Line Manager'},<br><br>
-
-A site visit approval request has been submitted for your review.<br><br>
-
-<strong>REQUEST DETAILS:</strong><br>
-- Request Number: ${requestNumber}<br>
-- Employee(s): ${employeeNames}<br>
-- Visit Date: ${formData.visitDate}<br>
-- Project & Location: ${formData.projectNameLocation}<br>
-- Purpose: ${formData.purpose}<br><br>
-
-<strong>ACTION REQUIRED:</strong><br>
-Please click the link below to review and approve/reject this request:<br><br>
-
-<a href="${approvalLink}" style="color: #1e5a96; font-weight: bold; text-decoration: underline;">${approvalLink}</a><br><br>
-
-Or copy and paste this link in your browser:<br>
-${approvalLink}<br><br>
-
-Best regards,<br>
-Zulfa Trading LLC`;
-
-            // Create modal with email info
-            const modal = document.createElement('div');
-            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px;';
             
-            const modalBox = document.createElement('div');
-            modalBox.style.cssText = 'background: white; padding: 25px; border-radius: 8px; max-width: 700px; max-height: 90vh; overflow-y: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.3);';
-            
-            modalBox.innerHTML = `
-                <h3 style="color: #1e5a96; margin-bottom: 15px;">📧 Send to Line Manager</h3>
-                <p style="margin-bottom: 15px;"><strong>To:</strong> ${lineManagerEmail}</p>
-                <p style="margin-bottom: 15px;"><strong>Subject:</strong> ${emailSubject}</p>
-                <hr style="margin: 15px 0;">
-                <p style="margin-bottom: 10px;"><strong>Email Message (HTML Preview):</strong></p>
-                <div id="emailPreview" style="border: 2px solid #1e5a96; border-radius: 4px; padding: 15px; background: #f9f9f9; margin-bottom: 15px; font-size: 12px; max-height: 300px; overflow-y: auto;">
-                    ${emailBodyHTML}
-                </div>
-                <p style="margin-bottom: 10px;"><strong>Plain Text Version (for copying):</strong></p>
-                <textarea id="emailContentBox" readonly style="width: 100%; height: 150px; padding: 10px; font-family: monospace; font-size: 11px; border: 2px solid #1e5a96; border-radius: 4px; resize: vertical;">${emailBody}</textarea>
-                <hr style="margin: 15px 0;">
-                <div style="background: #e3f2fd; padding: 12px; border-radius: 4px; margin: 15px 0;">
-                    <p style="font-size: 12px; margin-bottom: 8px;"><strong>📋 Instructions:</strong></p>
-                    <ol style="font-size: 11px; margin-left: 20px; line-height: 1.6;">
-                        <li>Click "Copy Email Content" below</li>
-                        <li>Open your email application (Gmail, Outlook, etc.)</li>
-                        <li>Create new email to: <strong>${lineManagerEmail}</strong></li>
-                        <li>Paste the content and send</li>
-                        <li><strong>Note:</strong> If your email supports HTML, the link will be clickable when pasted</li>
-                    </ol>
-                </div>
-                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 15px;">
-                    <button id="copyEmailBtn" class="btn btn-success" style="padding: 10px 25px;">📋 Copy Text Version</button>
-                    <button id="copyHTMLBtn" class="btn btn-primary" style="padding: 10px 25px;">📋 Copy HTML Version</button>
-                    <button id="closeModalBtn" class="btn btn-warning" style="padding: 10px 25px;">Close</button>
-                </div>
-            `;
-            
-            modal.appendChild(modalBox);
-            document.body.appendChild(modal);
-            
-            // Re-enable submit button
-            document.getElementById('submitToLineManagerBtn').disabled = false;
-            document.getElementById('submitToLineManagerBtn').textContent = 'Submit to Direct Manager/Supervisor';
-            
-            // Copy text version button
-            document.getElementById('copyEmailBtn').onclick = function() {
-                const textarea = document.getElementById('emailContentBox');
-                textarea.select();
-                document.execCommand('copy');
-                this.textContent = '✅ Copied Text!';
-                this.style.background = '#27ae60';
-                setTimeout(() => {
-                    this.textContent = '📋 Copy Text Version';
-                    this.style.background = '';
-                }, 2000);
-            };
-            
-            // Copy HTML version button
-            document.getElementById('copyHTMLBtn').onclick = function() {
-                const htmlContent = emailBodyHTML;
-                const blob = new Blob([htmlContent], { type: 'text/html' });
-                const clipboardItem = new ClipboardItem({ 'text/html': blob });
-                
-                navigator.clipboard.write([clipboardItem]).then(() => {
-                    this.textContent = '✅ Copied HTML!';
-                    this.style.background = '#27ae60';
-                    setTimeout(() => {
-                        this.textContent = '📋 Copy HTML Version';
-                        this.style.background = '';
-                    }, 2000);
-                }).catch(() => {
-                    // Fallback: copy the HTML as text
-                    const temp = document.createElement('textarea');
-                    temp.value = htmlContent;
-                    document.body.appendChild(temp);
-                    temp.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(temp);
-                    
-                    this.textContent = '✅ Copied!';
-                    this.style.background = '#27ae60';
-                    setTimeout(() => {
-                        this.textContent = '📋 Copy HTML Version';
-                        this.style.background = '';
-                    }, 2000);
-                });
-            };
-            
-            // Close button
-            document.getElementById('closeModalBtn').onclick = function() {
-                document.body.removeChild(modal);
-            };
-            
-            // Close on outside click
-            modal.onclick = function(e) {
-                if (e.target === modal) {
-                    document.body.removeChild(modal);
-                }
-            };
+            // For convenience, open mail client (if available) with prefilled subject and body
+            const mailto = `mailto:${encodeURIComponent(lineManagerEmail)}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+            window.location.href = mailto;
+            alert('✉️ Mail client opened to send request to Line Manager. If mail client did not open, copy the approval link:\n\n' + approvalLink);
         });
         
-        // Direct Manager/Supervisor Approve
-        document.getElementById('lineManagerApproveBtn').addEventListener('click', async function() {
-            const managerName = prompt('Enter your name (Direct Manager/Supervisor):');
-            if (!managerName) return;
-            
-            const requestNumber = document.getElementById('requestNumber').value;
-            
-            // Update locally first
-            document.getElementById('lineManagerName').value = managerName;
+        // Line manager approve / reject
+        document.getElementById('lineManagerApproveBtn').addEventListener('click', function() {
             document.getElementById('lineManagerStatus').value = 'approved';
             updateApprovalStatus('line-manager', 'approved');
-            
-            // Update in Google Sheets
-            try {
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        action: 'updateApproval',
-                        requestNumber: requestNumber,
-                        approverType: 'lineManager',
-                        name: managerName,
-                        status: 'approved',
-                        comments: document.getElementById('lineManagerComments').value || ''
-                    })
-                });
-                
-                const hrEmail = document.getElementById('hrManagerEmail').value;
-                const approvalLink = window.location.href.split('?')[0] + '?mode=hr-manager&req=' + requestNumber;
-                
-                alert('✅ Approved successfully!\n\nData saved to Google Sheets.\n\nNow forward to HR Manager:\n\nTo: ' + hrEmail + '\n\nApproval Link:\n' + approvalLink);
-            } catch (error) {
-                alert('⚠️ Approval recorded locally but may not have synced to Google Sheets.\n\nError: ' + error.message);
-            }
+            saveFormData();
+            alert('✅ Request approved by Line Manager.');
         });
-        
-        // Direct Manager/Supervisor Reject
-        document.getElementById('lineManagerRejectBtn').addEventListener('click', async function() {
-            const reason = prompt('Enter rejection reason:');
-            if (!reason) return;
-            
-            const managerName = prompt('Enter your name (Direct Manager/Supervisor):');
-            if (!managerName) return;
-            
-            const requestNumber = document.getElementById('requestNumber').value;
-            
-            // Update locally
-            document.getElementById('lineManagerName').value = managerName;
+        document.getElementById('lineManagerRejectBtn').addEventListener('click', function() {
             document.getElementById('lineManagerStatus').value = 'rejected';
-            document.getElementById('lineManagerComments').value = reason;
             updateApprovalStatus('line-manager', 'rejected');
-            
-            // Update in Google Sheets
-            try {
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        action: 'updateApproval',
-                        requestNumber: requestNumber,
-                        approverType: 'lineManager',
-                        name: managerName,
-                        status: 'rejected',
-                        comments: reason
-                    })
-                });
-                
-                alert('❌ Request rejected.\n\nData saved to Google Sheets.\n\nEmployee will be notified.');
-            } catch (error) {
-                alert('⚠️ Rejection recorded locally but may not have synced to Google Sheets.\n\nError: ' + error.message);
-            }
+            saveFormData();
+            alert('✖️ Request rejected by Line Manager.');
         });
         
-        // HR Manager Approve
-        document.getElementById('hrManagerApproveBtn').addEventListener('click', async function() {
-            const hrName = prompt('Enter your name (HR Manager):');
-            if (!hrName) return;
-            
-            const requestNumber = document.getElementById('requestNumber').value;
-            
-            // Update locally
-            document.getElementById('hrManagerName').value = hrName;
+        // HR manager approve / reject
+        document.getElementById('hrManagerApproveBtn').addEventListener('click', function() {
             document.getElementById('hrManagerStatus').value = 'approved';
             updateApprovalStatus('hr-manager', 'approved');
-            
-            // Update in Google Sheets
-            try {
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        action: 'updateApproval',
-                        requestNumber: requestNumber,
-                        approverType: 'hrManager',
-                        name: hrName,
-                        status: 'approved',
-                        comments: document.getElementById('hrManagerComments').value || ''
-                    })
-                });
-                
-                alert('✅ Final approval granted!\n\nData saved to Google Sheets.\n\nRequest is now complete. You can print or save as PDF.');
-            } catch (error) {
-                alert('⚠️ Approval recorded locally but may not have synced to Google Sheets.\n\nError: ' + error.message);
-            }
+            saveFormData();
+            alert('✅ Request approved by HR Manager.');
         });
-        
-        // HR Manager Reject
-        document.getElementById('hrManagerRejectBtn').addEventListener('click', async function() {
-            const reason = prompt('Enter rejection reason:');
-            if (!reason) return;
-            
-            const hrName = prompt('Enter your name (HR Manager):');
-            if (!hrName) return;
-            
-            const requestNumber = document.getElementById('requestNumber').value;
-            
-            // Update locally
-            document.getElementById('hrManagerName').value = hrName;
+        document.getElementById('hrManagerRejectBtn').addEventListener('click', function() {
             document.getElementById('hrManagerStatus').value = 'rejected';
-            document.getElementById('hrManagerComments').value = reason;
             updateApprovalStatus('hr-manager', 'rejected');
-            
-            // Update in Google Sheets
-            try {
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        action: 'updateApproval',
-                        requestNumber: requestNumber,
-                        approverType: 'hrManager',
-                        name: hrName,
-                        status: 'rejected',
-                        comments: reason
-                    })
-                });
-                
-                alert('❌ Request rejected by HR.\n\nData saved to Google Sheets.\n\nEmployee will be notified.');
-            } catch (error) {
-                alert('⚠️ Rejection recorded locally but may not have synced to Google Sheets.\n\nError: ' + error.message);
-            }
+            saveFormData();
+            alert('✖️ Request rejected by HR Manager.');
         });
         
-        // Print button
+        // Print and PDF (basic behavior: open print dialog; user can Save as PDF)
         document.getElementById('printBtn').addEventListener('click', function() {
             window.print();
         });
-        
-        // PDF button
         document.getElementById('pdfBtn').addEventListener('click', function() {
-            alert('💾 To save as PDF:\n\n1. Print dialog will open\n2. Select "Save as PDF" or "Microsoft Print to PDF"\n3. Choose location and save');
-            setTimeout(() => window.print(), 500);
+            // Most browsers allow "Save as PDF" from the print dialog
+            window.print();
+        });
+        
+        // If the page loaded with a request number, try and load it (but only if not already loaded by earlier logic)
+        window.addEventListener('load', function() {
+            const req = document.getElementById('requestNumber').value;
+            if (req) {
+                const saved = localStorage.getItem('form_' + req);
+                if (saved) {
+                    // Populate but avoid clobbering current mode UI if already switched
+                    if (!(modeParam && (modeParam === 'line-manager' || modeParam === 'hr-manager'))) {
+                        loadFormData(JSON.parse(saved));
+                    }
+                }
+            }
         });
     </script>
 </body>
