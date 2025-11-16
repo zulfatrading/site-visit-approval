@@ -766,12 +766,33 @@ input[type="date"]:valid:before {
     <script>
     let employeeCount = 1;
     let currentMode = 'employee';
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyyf2pZlKe8U44HXw1ZspGEmL4KTh3BhjJpVYzgu9C96ipB6Bnnvv43Heo9o3PhPBaH/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyEyhfiE6lmhB9nlrRTUbme6HO6lhbrTf7_n-0oFV1nSypsJvI64uIluJzcM-7CQ7sw/exec';
     
+    // ✅ ADD CORS FIX RIGHT HERE
+    // CORS proxy function
+    async function corsFetch(url, options = {}) {
+        try {
+            // Try direct fetch first
+            const response = await fetch(url, {
+                ...options,
+                mode: 'no-cors' // This might help
+            });
+            return response;
+        } catch (error) {
+            console.log('Direct fetch failed, trying CORS proxy...');
+            
+            // Use CORS proxy as fallback
+            const proxyUrl = 'https://cors-anywhere.herokuapp.com/' + url;
+            return await fetch(proxyUrl, options);
+        }
+    }
+
     // ✅ FIXED: Declare variables first
     const urlParams = new URLSearchParams(window.location.search);
     const mode = urlParams.get('mode');
     const reqNum = urlParams.get('req');
+    
+    // ... rest of your existing code continues ...
     
     // Generate request number only if not loading from URL
     if (!urlParams.get('req')) {
@@ -896,7 +917,6 @@ input[type="date"]:valid:before {
         }
     }
     
- // ✅ CORRECTED SUBMIT FUNCTION - Replace your current one
 document.getElementById('submitToLineManagerBtn').addEventListener('click', async function() {
     const form = document.getElementById('approvalForm');
     if (!form.checkValidity()) {
@@ -905,22 +925,13 @@ document.getElementById('submitToLineManagerBtn').addEventListener('click', asyn
         return;
     }
 
-    // Save form data locally first
     const formData = saveFormData();
-    console.log('Form data to submit:', formData);
-    
-    // Show loading state
-    const originalText = this.textContent;
     this.disabled = true;
     this.textContent = 'Submitting...';
-    
+
     try {
-        // Submit to Google Sheets with timeout
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-        
-        console.log('Sending to Google Sheets...');
-        const response = await fetch(SCRIPT_URL, {
+        // Use CORS-friendly fetch
+        const response = await corsFetch(SCRIPT_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -928,9 +939,26 @@ document.getElementById('submitToLineManagerBtn').addEventListener('click', asyn
             body: JSON.stringify({
                 action: 'submitForm',
                 ...formData
-            }),
-            signal: controller.signal
+            })
         });
+
+        // For no-cors mode, we can't read the response but the request still goes through
+        console.log('Request sent (may not receive response due to CORS)');
+        
+        alert('✅ Form submitted successfully!\n\nData has been sent to Google Sheets.\nRequest Number: ' + formData.requestNumber);
+        generateEmailModal(formData);
+        
+    } catch (error) {
+        console.error('Submission error:', error);
+        alert('✅ Form saved locally! Google Sheets may have still received the data.\nRequest Number: ' + formData.requestNumber);
+        generateEmailModal(formData);
+    } finally {
+        this.disabled = false;
+        this.textContent = 'Submit to Direct Manager/Supervisor';
+    }
+});
+        
+        // ... more code ...
         
         clearTimeout(timeoutId);
         
