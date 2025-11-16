@@ -896,47 +896,71 @@ input[type="date"]:valid:before {
         }
     }
     
-    // ✅ CORRECTED SUBMIT FUNCTION
-    document.getElementById('submitToLineManagerBtn').addEventListener('click', async function() {
-        const form = document.getElementById('approvalForm');
-        if (!form.checkValidity()) {
-            alert('⚠️ Please fill all required fields marked with *');
-            form.reportValidity();
-            return;
-        }
+ // ✅ CORRECTED SUBMIT FUNCTION - Replace your current one
+document.getElementById('submitToLineManagerBtn').addEventListener('click', async function() {
+    const form = document.getElementById('approvalForm');
+    if (!form.checkValidity()) {
+        alert('⚠️ Please fill all required fields marked with *');
+        form.reportValidity();
+        return;
+    }
 
-        // Save form data
-        const formData = saveFormData();
+    // Save form data locally first
+    const formData = saveFormData();
+    console.log('Form data to submit:', formData);
+    
+    // Show loading state
+    const originalText = this.textContent;
+    this.disabled = true;
+    this.textContent = 'Submitting...';
+    
+    try {
+        // Submit to Google Sheets with timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
         
-        try {
-            // Submit to Google Sheets
-            const response = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    action: 'submitForm',
-                    ...formData
-                })
-            });
-            
-            const result = await response.json();
-            
-            if (!result.success) {
-                throw new Error(result.error || 'Failed to save to Google Sheets');
-            }
-            
-            // SUCCESS - Generate email
+        console.log('Sending to Google Sheets...');
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'submitForm',
+                ...formData
+            }),
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        console.log('Response status:', response.status);
+        const result = await response.json();
+        console.log('Google Sheets response:', result);
+        
+        if (result.success) {
+            alert('✅ Form submitted successfully!\n\nData saved to Google Sheets.\nRequest Number: ' + formData.requestNumber);
+            // Generate email modal
             generateEmailModal(formData);
-            
-        } catch (error) {
-            console.error('Google Sheets error:', error);
-            // Fallback: still generate email even if Sheets fails
-            generateEmailModal(formData);
-            alert('✅ Form submitted! (Google Sheets may not have updated)');
+        } else {
+            throw new Error(result.error || 'Google Sheets returned error');
         }
-    });
+        
+    } catch (error) {
+        console.error('Submission error:', error);
+        if (error.name === 'AbortError') {
+            alert('⏰ Request timeout. Data saved locally but Google Sheets may not have updated.');
+        } else {
+            alert('⚠️ Data saved locally. Google Sheets error: ' + error.message);
+        }
+        // Still generate email even if Sheets fails
+        generateEmailModal(formData);
+    } finally {
+        // Reset button
+        this.disabled = false;
+        this.textContent = originalText;
+    }
+});
 
     // ✅ NEW FUNCTION: Generate Email Modal
     function generateEmailModal(formData) {
